@@ -7,7 +7,7 @@ import makeWASocket, {
 } from "@adiwajshing/baileys";
 import { Boom } from "@hapi/boom";
 import pino from "pino";
-import keepAlive from "./server.js";
+import keepAlive from "./server";
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
 
 async function connectToWhatsApp() {
