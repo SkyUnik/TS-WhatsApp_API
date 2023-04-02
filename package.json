@@ -5,6 +5,7 @@
     "main": "Message_format.js",
     "dependencies": {
         "@adiwajshing/baileys": "^5.0.0",
+        "@types/node": "^18.15.11",
         "accepts": "^1.3.8",
         "array-flatten": "^1.1.1",
         "atomic-sleep": "^1.0.0",
