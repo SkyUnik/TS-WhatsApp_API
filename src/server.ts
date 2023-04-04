@@ -11,11 +11,15 @@ server.all("/", (req, res) => {
 });
 
 export default function keepAlive(port: number) {
-    server
-        .listen(port, () => {
-            console.log("Server listening on Port", port);
-        })
-        .on("error", (err: NodeJS.ErrnoException) => {
-            console.log(`Error in server setup: ${err}`);
-        });
+    function startServer() {
+        server
+            .listen(port, () => {
+                console.log("Server listening on Port", port);
+            })
+            .on("error", (err: NodeJS.ErrnoException) => {
+                console.log(`Error in server setup: ${err}`);
+                setTimeout(startServer, 5000);
+            });
+    }
+    startServer();
 }

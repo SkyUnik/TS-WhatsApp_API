@@ -76,7 +76,7 @@ async function connectToWhatsApp() {
         let mediaType: string[] = ["imageMessage", "videoMessage", "stickerMessage", "audioMessage"];
         const isMedia: boolean = quotedMsg === false ? mediaType.includes(type) : mediaType.includes(quotedMsg.Message);
 
-        console.log(m);
+        // console.log(m);
         console.log(`[New Message] : --isGroupMsg:'${isGroupMsg}' --message:'${body}' --sender:'${sender}' --user:'${m.pushName}'`);
         // bcommand is the command of the body trimmed
         if (bcommand === prefix + "ping") {
