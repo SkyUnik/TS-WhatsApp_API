@@ -34,7 +34,6 @@ async function connectToWhatsApp() {
         } else if (connection === "open") {
             console.log("Established Connection");
         }
-        keepAlive(3000);
     });
     sock.ev.on("messages.upsert", async (m_raw) => {
         let m = m_raw.messages[0];
@@ -130,4 +129,5 @@ function sleep(s: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, s * 1000));
 }
 
+keepAlive(3000);
 connectToWhatsApp();
