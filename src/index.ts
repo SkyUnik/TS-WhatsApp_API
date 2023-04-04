@@ -33,9 +33,11 @@ async function connectToWhatsApp() {
             }
         } else if (connection === "open") {
             console.log("Established Connection");
+            sock.sendPresenceUpdate("unavailable");
         }
     });
     sock.ev.on("messages.upsert", async (m_raw) => {
+        sock.sendPresenceUpdate("unavailable");
         let m = m_raw.messages[0];
         // console.log(JSON.stringify(m, undefined, 2));
         // console.log("replying to", m.messages[0].key.remoteJid);
@@ -47,9 +49,10 @@ async function connectToWhatsApp() {
         if (m.key.fromMe == true) return;
         if (!m.message) return;
 
+        await sock.readMessages([m.key]);
         // Format
         const owner: string = "6281382519681@s.whatsapp.net";
-        const type: any = Object.keys(m?.message)[0];
+        const type: any = Object.keys(m?.message).find((key) => m?.message[key]?.text);
         const isGroupMsg: boolean = m.key.remoteJid.endsWith("@g.us");
         const sender: string = isGroupMsg ? m.key.participant : m.key.remoteJid;
         const chatId: string = m.key.remoteJid;
@@ -73,19 +76,25 @@ async function connectToWhatsApp() {
         const quotedMsg = m.message[type]?.contextInfo?.quotedMessage ? m.message[type]?.contextInfo.quotedMessage : false;
         const groupMetadata = isGroupMsg ? await sock.groupMetadata(chatId) : undefined;
         let mediaType: string[] = ["imageMessage", "videoMessage", "stickerMessage", "audioMessage"];
-        const isMedia: boolean = quotedMsg === false ? mediaType.includes(type) : mediaType.includes(quotedMsg.Message);
+        const isMedia: boolean =
+            quotedMsg === false ? mediaType.includes(type) : mediaType.includes(Object.keys(quotedMsg).find((key) => mediaType.includes(key)));
 
         // console.log(m);
+        // console.log(type);
         console.log(`[New Message] : --isGroupMsg:'${isGroupMsg}' --message:'${body}' --sender:'${sender}' --user:'${m.pushName}'`);
         // bcommand is the command of the body trimmed
+        if (bcommand === prefix + "sticker") {
+            await sock.sendPresenceUpdate("composing", chatId);
+            // await sleep(0.5);
+            await sock.sendMessage(chatId, { text: `ℹ️ !sticker is under development 😎\n[MsgContainMedia] : ${isMedia}` }, { quoted: m });
+        }
+
         if (bcommand === prefix + "ping") {
-            await sock.readMessages([m.key]);
             await sock.sendPresenceUpdate("composing", chatId);
             // await sleep(0.5);
             await sock.sendMessage(chatId, { text: "What's Up 👋" }, { quoted: m });
         }
         if (bcommand === prefix + "everyone" && isGroupMsg) {
-            await sock.readMessages([m.key]);
             await sock.sendPresenceUpdate("composing", chatId);
             // await sleep(0.5);
             const participants = groupMetadata.participants.map((i) => i.id);
@@ -108,15 +117,15 @@ async function connectToWhatsApp() {
         }
         // bcommand is the command of the body trimmed
         if (bcommand === prefix + "run") {
-            await sock.readMessages([m.key]);
             if (sender === owner) {
-                await sock.sendPresenceUpdate("composing", chatId);
                 if (!argument) {
+                    await sock.sendPresenceUpdate("composing", chatId);
                     await sock.sendMessage(chatId, { text: "❓Please put an argument sire" }, { quoted: m });
                 } else {
                     try {
                         await eval(argument);
                     } catch (err) {
+                        await sock.sendPresenceUpdate("composing", chatId);
                         await sock.sendMessage(chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
                     }
                 }
