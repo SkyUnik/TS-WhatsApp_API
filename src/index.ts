@@ -12,7 +12,6 @@ import keepAlive from "./server";
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
 
 async function connectToWhatsApp() {
-    keepAlive();
     const { version, isLatest } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState("auth_info");
     console.log(`[VERSION] : ${version.join(".")}`);
@@ -35,6 +34,7 @@ async function connectToWhatsApp() {
         } else if (connection === "open") {
             console.log("Established Connection");
         }
+        keepAlive(3000);
     });
     sock.ev.on("messages.upsert", async (m_raw) => {
         let m = m_raw.messages[0];

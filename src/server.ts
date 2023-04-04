@@ -1,7 +1,6 @@
 import express from "express";
 
 const server = express();
-const port = 3000;
 
 server.all("/", (req, res) => {
     // res.setHeader("Content-Type", "text/html");
@@ -11,8 +10,12 @@ server.all("/", (req, res) => {
     // res.end();
 });
 
-export default function keepAlive() {
-    server.listen(port, () => {
-        console.log("Server is online!");
-    });
+export default function keepAlive(port: number) {
+    server
+        .listen(port, () => {
+            console.log("Server listening on Port", port);
+        })
+        .on("error", (err: NodeJS.ErrnoException) => {
+            console.log(`Error in server setup: ${err}`);
+        });
 }
