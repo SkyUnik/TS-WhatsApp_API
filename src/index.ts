@@ -48,7 +48,7 @@ async function connectToWhatsApp() {
         if (!m.message) return;
 
         // Format
-        const owner = "6281382519681@s.whatsapp.net";
+        const owner: string = "6281382519681@s.whatsapp.net";
         const type: any = Object.keys(m?.message)[0];
         const isGroupMsg: boolean = m.key.remoteJid.endsWith("@g.us");
         const sender: string = isGroupMsg ? m.key.participant : m.key.remoteJid;
@@ -70,9 +70,13 @@ async function connectToWhatsApp() {
             ?.replace(/^\s+|\s+$/g, "")
             .split(/\s+/)[0]
             .toLowerCase();
+        const quotedMsg = m.message[type]?.contextInfo?.quotedMessage ? m.message[type]?.contextInfo.quotedMessage : false;
+        const groupMetadata = isGroupMsg ? await sock.groupMetadata(chatId) : undefined;
+        let mediaType: string[] = ["imageMessage", "videoMessage", "stickerMessage", "audioMessage"];
+        const isMedia: boolean = quotedMsg === false ? mediaType.includes(type) : mediaType.includes(quotedMsg.Message);
+
         console.log(m);
         console.log(`[New Message] : --isGroupMsg:'${isGroupMsg}' --message:'${body}' --sender:'${sender}' --user:'${m.pushName}'`);
-
         // bcommand is the command of the body trimmed
         if (bcommand === prefix + "ping") {
             await sock.readMessages([m.key]);
@@ -80,11 +84,10 @@ async function connectToWhatsApp() {
             // await sleep(0.5);
             await sock.sendMessage(chatId, { text: "What's Up 👋" }, { quoted: m });
         }
-        if (bcommand === prefix + "everyone") {
+        if (bcommand === prefix + "everyone" && isGroupMsg) {
             await sock.readMessages([m.key]);
             await sock.sendPresenceUpdate("composing", chatId);
             // await sleep(0.5);
-            const groupMetadata = await sock.groupMetadata(chatId);
             const participants = groupMetadata.participants.map((i) => i.id);
             if (!argument) {
                 const people_tag = participants.map((item) => "@" + item.match(/\d+/g).join(" ")).join(" ");
@@ -98,9 +101,7 @@ async function connectToWhatsApp() {
                 );
             } else {
                 sock.sendMessage(chatId, {
-                    text: `Everyone is Tag By: @${sender_num}
-
-${argument}`,
+                    text: `Everyone is Tag By: @${sender_num}\n\n${argument}`,
                     mentions: participants,
                 });
             }
