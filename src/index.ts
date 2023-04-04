@@ -12,6 +12,7 @@ import keepAlive from "./server";
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
 
 async function connectToWhatsApp() {
+    keepAlive();
     const { version, isLatest } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState("auth_info");
     console.log(`[VERSION] : ${version.join(".")}`);
@@ -129,5 +130,4 @@ function sleep(s: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, s * 1000));
 }
 
-keepAlive();
 connectToWhatsApp();
