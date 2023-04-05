@@ -52,7 +52,8 @@ async function connectToWhatsApp() {
         await sock.readMessages([m.key]);
         // Format
         const owner: string = "6281382519681@s.whatsapp.net";
-        const type: any = Object.keys(m?.message).find((key) => m?.message[key]?.text);
+        const type: any = Object.keys(m?.message).find((key) => m?.message[key]?.contextInfo || m?.message[key]?.caption);
+        // const type: any = Object.keys(m?.message)[0];
         const isGroupMsg: boolean = m.key.remoteJid.endsWith("@g.us");
         const sender: string = isGroupMsg ? m.key.participant : m.key.remoteJid;
         const chatId: string = m.key.remoteJid;
@@ -80,7 +81,6 @@ async function connectToWhatsApp() {
             quotedMsg === false ? mediaType.includes(type) : mediaType.includes(Object.keys(quotedMsg).find((key) => mediaType.includes(key)));
 
         // console.log(m);
-        // console.log(type);
         console.log(`[New Message] : --isGroupMsg:'${isGroupMsg}' --message:'${body}' --sender:'${sender}' --user:'${m.pushName}'`);
         // bcommand is the command of the body trimmed
         if (bcommand === prefix + "sticker") {
