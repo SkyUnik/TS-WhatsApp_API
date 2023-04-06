@@ -136,7 +136,7 @@ async function connectToWhatsApp() {
                 const stickerimg = new Sticker(buffer_img, {
                     pack: "Bot Wwjs - Fatih", // pack name
                     author: m.argument ? m.argument : null, // author name
-                    // type: StickerTypes.CROPPED, // sticker type
+                    type: m.argument.includes("-f") ? StickerTypes.FULL : StickerTypes.CROPPED, // sticker type
                     quality: 1, // quality of the output file
                 });
                 await sock.sendMessage(m.chatId, await stickerimg.toMessage(), { quoted: m });
