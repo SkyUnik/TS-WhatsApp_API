@@ -1,13 +1,17 @@
 import makeWASocket, {
     DisconnectReason,
-    SignalDataSet,
-    SignalDataTypeMap,
+    downloadContentFromMessage,
+    downloadMediaMessage,
     useMultiFileAuthState,
     fetchLatestBaileysVersion,
+    WAMessage,
+    proto,
+    GroupMetadata,
 } from "@adiwajshing/baileys";
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import keepAlive from "./server";
+import { Sticker, createSticker, StickerTypes } from "wa-sticker-formatter";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
 
@@ -20,6 +24,7 @@ async function connectToWhatsApp() {
         printQRInTerminal: true,
         auth: state,
         logger: pino({ level: "silent" }),
+        markOnlineOnConnect: false,
     });
     sock.ev.on("creds.update", saveCreds);
     sock.ev.on("connection.update", (update) => {
@@ -33,12 +38,27 @@ async function connectToWhatsApp() {
             }
         } else if (connection === "open") {
             console.log("Established Connection");
-            sock.sendPresenceUpdate("unavailable");
         }
     });
     sock.ev.on("messages.upsert", async (m_raw) => {
-        sock.sendPresenceUpdate("unavailable");
-        let m = m_raw.messages[0];
+        type MsgConstructor = WAMessage & {
+            type?: { msg?: string; quotedMsg?: string };
+            body?: string;
+            argument?: string;
+            chatId?: string;
+            sender?: string;
+            isGroupMsg?: boolean;
+            groupMetadata?: GroupMetadata | boolean;
+            isMedia?: boolean;
+            quotedMsg?: false | WAMessage;
+            owner?: string;
+            bcommand?: string;
+        };
+
+        // type MegaMsgConstructor = proto.IMessage & {
+
+        // }
+        let m: MsgConstructor = m_raw.messages[0];
         // console.log(JSON.stringify(m, undefined, 2));
         // console.log("replying to", m.messages[0].key.remoteJid);
         // await sock.sendMessage(m.messages[0].key.remoteJid!, { text: "Hello there!" });
@@ -51,82 +71,122 @@ async function connectToWhatsApp() {
 
         await sock.readMessages([m.key]);
         // Format
-        const owner: string = "6281382519681@s.whatsapp.net";
-        const type: any = Object.keys(m?.message).find((key) => m?.message[key]?.contextInfo || m?.message[key]?.caption);
+        m.owner = "6281382519681@s.whatsapp.net";
+        m.type = {};
+        m.type.msg = Object.keys(m.message).find((key) => m?.message[key]?.contextInfo || m?.message[key]?.caption);
         // const type: any = Object.keys(m?.message)[0];
-        const isGroupMsg: boolean = m.key.remoteJid.endsWith("@g.us");
-        const sender: string = isGroupMsg ? m.key.participant : m.key.remoteJid;
-        const chatId: string = m.key.remoteJid;
-        const sender_num = sender.split("@s.whatsapp.net");
-        const body: string =
+        m.isGroupMsg = m.key.remoteJid.endsWith("@g.us");
+        m.sender = m.isGroupMsg ? m.key.participant : m.key.remoteJid;
+        m.chatId = m.key.remoteJid;
+        const sender_num = m.sender.split("@s.whatsapp.net");
+        m.body =
             m.message?.conversation ||
-            m.message[type]?.text ||
-            m.message[type]?.caption ||
-            m.message[type]?.selectedDisplayText ||
-            m.message[type]?.description ||
-            m.message[type]?.contentText ||
-            m.message[type]?.title;
-        let words: string[] = body?.replace(/^\s+|\s+$/g, "").split(/\s+/);
+            m.message[m.type.msg]?.text ||
+            m.message[m.type.msg]?.caption ||
+            m.message[m.type.msg]?.selectedDisplayText ||
+            m.message[m.type.msg]?.description ||
+            m.message[m.type.msg]?.contentText ||
+            m.message[m.type.msg]?.title;
+        let words: string[] = m.body?.replace(/^\s+|\s+$/g, "").split(/\s+/);
         words = words?.slice(1);
-        let argument: string = words?.join(" ");
+        m.argument = words?.join(" ");
         // let bcommand = body?.split(" ")[0].toLowerCase();
-        let bcommand = body
+        m.bcommand = m.body
             ?.replace(/^\s+|\s+$/g, "")
             .split(/\s+/)[0]
             .toLowerCase();
-        const quotedMsg = m.message[type]?.contextInfo?.quotedMessage ? m.message[type]?.contextInfo.quotedMessage : false;
-        const groupMetadata = isGroupMsg ? await sock.groupMetadata(chatId) : undefined;
-        let mediaType: string[] = ["imageMessage", "videoMessage", "stickerMessage", "audioMessage"];
-        const isMedia: boolean =
-            quotedMsg === false ? mediaType.includes(type) : mediaType.includes(Object.keys(quotedMsg).find((key) => mediaType.includes(key)));
+        m.quotedMsg = m.message[m.type.msg]?.contextInfo.quotedMessage ? m.message[m.type.msg]?.contextInfo.quotedMessage : false;
+        // const type_quoted: any = Object.keys(quotedMsg);
+        if (m.quotedMsg != false) {
+            m.type.quotedMsg = Object.keys(m.quotedMsg)[0];
+            // const quote: any = m.quotedMsg;
+            m.quotedMsg = {
+                key: {
+                    remoteJid: m.chatId,
+                    id: m.message[m.type.msg]?.contextInfo?.stanzaId,
+                    participant: m.message[m.type.msg]?.contextInfo?.participant,
+                },
+                message: new proto.Message(m.message[m.type.msg]?.contextInfo.quotedMessage),
+            };
+        }
+
+        m.groupMetadata = m.isGroupMsg ? await sock.groupMetadata(m.chatId) : false;
+        let mediaType = ["imageMessage", "videoMessage", "stickerMessage", "audioMessage"];
+        m.isMedia = m.quotedMsg === false ? mediaType.includes(m.type.msg) : mediaType.includes(m.type.quotedMsg);
 
         // console.log(m);
-        console.log(`[New Message] : --isGroupMsg:'${isGroupMsg}' --message:'${body}' --sender:'${sender}' --user:'${m.pushName}'`);
+        // console.log(m);
+        console.log(`[New Message] : --isGroupMsg:'${m.isGroupMsg}' --message:'${m.body}' --sender:'${m.sender}' --user:'${m.pushName}'`);
         // bcommand is the command of the body trimmed
-        if (bcommand === prefix + "sticker") {
-            await sock.sendPresenceUpdate("composing", chatId);
-            // await sleep(0.5);
-            await sock.sendMessage(chatId, { text: `ℹ️ !sticker is under development 😎\n[MsgContainMedia] : ${isMedia}` }, { quoted: m });
+        if (m.bcommand === prefix + "sticker") {
+            await sock.sendPresenceUpdate("composing", m.chatId);
+            if (!m.isMedia) {
+                await sock.sendMessage(m.chatId, { text: "❓Please give a media to convert to sticker" }, { quoted: m });
+            }
+            try {
+                const buffer_img: any = await downloadMediaMessage(
+                    !m.quotedMsg ? m : m.quotedMsg,
+                    "buffer",
+                    {},
+                    {
+                        logger: pino({ level: "silent" }),
+                        reuploadRequest: sock.updateMediaMessage,
+                    }
+                );
+                const stickerimg = new Sticker(buffer_img, {
+                    pack: "Bot Wwjs - Fatih", // pack name
+                    author: m.argument ? m.argument : null, // author name
+                    // type: StickerTypes.CROPPED, // sticker type
+                    quality: 1, // quality of the output file
+                });
+                await sock.sendMessage(m.chatId, await stickerimg.toMessage(), { quoted: m });
+                // // await sleep(0.5);
+            } catch (err) {
+                await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                console.log(err);
+            }
         }
 
-        if (bcommand === prefix + "ping") {
-            await sock.sendPresenceUpdate("composing", chatId);
+        if (m.bcommand === prefix + "ping") {
+            await sock.sendPresenceUpdate("composing", m.chatId);
             // await sleep(0.5);
-            await sock.sendMessage(chatId, { text: "What's Up 👋" }, { quoted: m });
+            await sock.sendMessage(m.chatId, { text: "What's Up 👋" }, { quoted: m });
         }
-        if (bcommand === prefix + "everyone" && isGroupMsg) {
-            await sock.sendPresenceUpdate("composing", chatId);
+        if (m.bcommand === prefix + "everyone" && m.isGroupMsg) {
+            await sock.sendPresenceUpdate("composing", m.chatId);
             // await sleep(0.5);
-            const participants = groupMetadata.participants.map((i) => i.id);
-            if (!argument) {
-                const people_tag = participants.map((item) => "@" + item.match(/\d+/g).join(" ")).join(" ");
-                sock.sendMessage(
-                    chatId,
-                    {
-                        text: people_tag,
+            if (m.isGroupMsg && m.groupMetadata && typeof m.groupMetadata === "object") {
+                const participants = m.groupMetadata.participants.map((i) => i.id);
+                if (!m.argument) {
+                    const people_tag = participants.map((item) => "@" + item.match(/\d+/g).join(" ")).join(" ");
+                    sock.sendMessage(
+                        m.chatId,
+                        {
+                            text: people_tag,
+                            mentions: participants,
+                        },
+                        { quoted: m }
+                    );
+                } else {
+                    sock.sendMessage(m.chatId, {
+                        text: `Everyone is Tag By: @${sender_num}\n\n${m.argument}`,
                         mentions: participants,
-                    },
-                    { quoted: m }
-                );
-            } else {
-                sock.sendMessage(chatId, {
-                    text: `Everyone is Tag By: @${sender_num}\n\n${argument}`,
-                    mentions: participants,
-                });
+                    });
+                }
             }
         }
         // bcommand is the command of the body trimmed
-        if (bcommand === prefix + "run") {
-            if (sender === owner) {
-                if (!argument) {
-                    await sock.sendPresenceUpdate("composing", chatId);
-                    await sock.sendMessage(chatId, { text: "❓Please put an argument sire" }, { quoted: m });
+        if (m.bcommand === prefix + "run") {
+            if (m.sender === m.owner) {
+                if (!m.argument) {
+                    await sock.sendPresenceUpdate("composing", m.chatId);
+                    await sock.sendMessage(m.chatId, { text: "❓Please put an argument sire" }, { quoted: m });
                 } else {
                     try {
-                        await eval(argument);
+                        await eval(m.argument);
                     } catch (err) {
-                        await sock.sendPresenceUpdate("composing", chatId);
-                        await sock.sendMessage(chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                        await sock.sendPresenceUpdate("composing", m.chatId);
+                        await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
                     }
                 }
             }
