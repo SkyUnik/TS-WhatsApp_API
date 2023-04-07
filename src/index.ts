@@ -12,11 +12,11 @@ import { Boom } from "@hapi/boom";
 import pino from "pino";
 import keepAlive from "./server";
 import { Sticker, StickerTypes } from "wa-sticker-formatter";
-import { writeFile } from "fs/promises";
-import { exec } from "child_process";
-import * as fs from "fs";
-import { promisify } from "util";
-import path from "path";
+// import { writeFile } from "fs/promises";
+// import { exec } from "child_process";
+// import * as fs from "fs";
+// import { promisify } from "util";
+// import path from "path";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
 async function connectToWhatsApp() {

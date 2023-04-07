@@ -1,8 +1,7 @@
 { pkgs }: {
     deps = [
-        pkgs.nodejs
         pkgs.nodePackages.typescript
-        pkgs.ffmpeg
+        pkgs.jellyfin-ffmpeg
         pkgs.git
     ];
 }
