@@ -1,5 +1,8 @@
 yarn.lock
+package-lock.json
 yarn-error.log
+proxy.ts
 node_modules/
+lib/
 auth_info/
 dist/

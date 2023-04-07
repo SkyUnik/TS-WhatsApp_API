@@ -12,9 +12,10 @@ import { Boom } from "@hapi/boom";
 import pino from "pino";
 import keepAlive from "./server";
 import { Sticker, StickerTypes } from "wa-sticker-formatter";
+import { ChatGPTUnofficialProxyAPI } from "chatgpt";
+// import { writeFile } from "fs/promises";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
-
 async function connectToWhatsApp() {
     const { version, isLatest } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState("auth_info");
@@ -54,10 +55,6 @@ async function connectToWhatsApp() {
             owner?: string;
             bcommand?: string;
         };
-
-        // type MegaMsgConstructor = proto.IMessage & {
-
-        // }
         let m: MsgConstructor = m_raw.messages[0];
         // console.log(JSON.stringify(m, undefined, 2));
         // console.log("replying to", m.messages[0].key.remoteJid);
@@ -95,7 +92,7 @@ async function connectToWhatsApp() {
             ?.replace(/^\s+|\s+$/g, "")
             .split(/\s+/)[0]
             .toLowerCase();
-        m.quotedMsg = m.message[m.type.msg]?.contextInfo.quotedMessage ? m.message[m.type.msg]?.contextInfo.quotedMessage : false;
+        m.quotedMsg = m.message[m.type.msg]?.contextInfo?.quotedMessage ? m.message[m.type.msg]?.contextInfo?.quotedMessage : false;
         // const type_quoted: any = Object.keys(quotedMsg);
         if (m.quotedMsg != false) {
             m.type.quotedMsg = Object.keys(m.quotedMsg)[0];
@@ -114,7 +111,6 @@ async function connectToWhatsApp() {
         let mediaType = ["imageMessage", "videoMessage", "stickerMessage", "audioMessage"];
         m.isMedia = !m.quotedMsg ? mediaType.includes(m.type.msg) : mediaType.includes(m.type.quotedMsg);
 
-        // console.log(m);
         // console.log(m);
         console.log(`[New Message] : --isGroupMsg:'${m.isGroupMsg}' --message:'${m.body}' --sender:'${m.sender}' --user:'${m.pushName}'`);
         // bcommand is the command of the body trimmed
@@ -140,7 +136,7 @@ async function connectToWhatsApp() {
                 );
                 const stickerimg = new Sticker(buffer_img, {
                     pack: "Bot Wwjs - Fatih", // pack name
-                    author: m.argument ? m.argument.replace(/-\w+/g, "") : null, // author name
+                    author: m.argument ? m.argument.replace(/-\w+\s*/g, "").trim() : null, // author name
                     type: m.argument.includes("-f")
                         ? StickerTypes.FULL
                         : m.argument.includes("-c")
@@ -161,6 +157,34 @@ async function connectToWhatsApp() {
             }
         }
 
+        if (m.bcommand === prefix + "gpt") {
+            await sock.sendPresenceUpdate("composing", m.chatId);
+            await sock.sendMessage(
+                m.chatId,
+                { text: `ℹ️[INFO] : Attention!!, ${prefix}gpt command is still in development and might be remove` },
+                { quoted: m }
+            );
+            return;
+            try {
+                // await sock.sendMessage(m.chatId, { text: "🗣️[CHATGPT] : " + chatgpt.text }, { quoted: m });
+            } catch (err) {
+                await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+            }
+        }
+        if (m.bcommand === prefix + "anime") {
+            await sock.sendPresenceUpdate("composing", m.chatId);
+            await sock.sendMessage(
+                m.chatId,
+                { text: `ℹ️[INFO] : Attention!!, ${prefix}gpt  command is still in development and might be remove` },
+                { quoted: m }
+            );
+            return;
+            try {
+                // await sock.sendMessage(m.chatId, { text: "🗣️[CHATGPT] : " + chatgpt.text }, { quoted: m });
+            } catch (err) {
+                await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+            }
+        }
         if (m.bcommand === prefix + "ping") {
             await sock.sendPresenceUpdate("composing", m.chatId);
             // await sleep(0.5);
@@ -182,10 +206,14 @@ async function connectToWhatsApp() {
                         { quoted: m }
                     );
                 } else {
-                    sock.sendMessage(m.chatId, {
-                        text: `Everyone is Tag By: @${sender_num}\n\n${m.argument}`,
-                        mentions: participants,
-                    });
+                    sock.sendMessage(
+                        m.chatId,
+                        {
+                            text: `Everyone is Tag By: @${sender_num}\n\n${m.argument}`,
+                            mentions: participants,
+                        },
+                        { quoted: m }
+                    );
                 }
             }
         }
