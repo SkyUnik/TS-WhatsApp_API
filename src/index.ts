@@ -121,7 +121,11 @@ async function connectToWhatsApp() {
         if (m.bcommand === prefix + "sticker") {
             await sock.sendPresenceUpdate("composing", m.chatId);
             if (!m.isMedia) {
-                await sock.sendMessage(m.chatId, { text: "❓Please give a media to convert to sticker" }, { quoted: m });
+                await sock.sendMessage(m.chatId, { text: "❓[REJECTED] : Please give a media to convert to sticker" }, { quoted: m });
+                return;
+            }
+            if (m.type.quotedMsg == "stickerMessage") {
+                await sock.sendMessage(m.chatId, { text: "❓[REJECTED] : Bro...., what are you DOING!" }, { quoted: m });
                 return;
             }
             try {
@@ -137,10 +141,19 @@ async function connectToWhatsApp() {
                 const stickerimg = new Sticker(buffer_img, {
                     pack: "Bot Wwjs - Fatih", // pack name
                     author: m.argument ? m.argument.replace(/-\w+/g, "") : null, // author name
-                    type: m.argument.includes("-f") ? StickerTypes.FULL : StickerTypes.CROPPED, // sticker type
+                    type: m.argument.includes("-f")
+                        ? StickerTypes.FULL
+                        : m.argument.includes("-c")
+                        ? StickerTypes.CIRCLE
+                        : m.argument.includes("-r")
+                        ? StickerTypes.ROUNDED
+                        : StickerTypes.CROPPED, // sticker type
                     quality: 20, // quality of the output file
                 });
                 await sock.sendMessage(m.chatId, await stickerimg.toMessage(), { quoted: m });
+                await sock.sendMessage(m.chatId, {
+                    text: `Additional option : \n-f : Full size sticker\n-c : Circle size sticker\n-r : Rounded size sticker\n\nBy Default is Cropped size sticker`,
+                });
                 // // await sleep(0.5);
             } catch (err) {
                 await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
