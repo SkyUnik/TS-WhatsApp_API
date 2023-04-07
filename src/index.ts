@@ -14,7 +14,9 @@ import keepAlive from "./server";
 import { Sticker, StickerTypes } from "wa-sticker-formatter";
 import { writeFile } from "fs/promises";
 import { exec } from "child_process";
-import { readFileSync } from "fs";
+import * as fs from "fs";
+import { promisify } from "util";
+import path from "path";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
 async function connectToWhatsApp() {
@@ -125,49 +127,69 @@ async function connectToWhatsApp() {
                 await sock.sendMessage(m.chatId, { text: "❓[REJECTED] : Bro...., what are you DOING!" }, { quoted: m });
                 return;
             }
-            try {
-                let buffer_img: any = await downloadMediaMessage(
-                    !m.quotedMsg ? m : m.quotedMsg,
-                    "buffer",
-                    {},
-                    {
-                        logger: pino({ level: "silent" }),
-                        reuploadRequest: sock.updateMediaMessage,
-                    }
-                );
-                if (m.type.quotedMsg === "videoMessage" || m.type.msg === "videoMessage") {
-                    try {
-                        await writeFile("./buff-sticker.mp4", buffer_img);
-                        exec(
-                            `ffmpeg -i buff-sticker.mp4 -v quiet -vcodec libwebp -filter:v fps=fps=20 -lossless 0  -compression_level 3 -q:v 70 -loop 1 -preset picture -an -vsync 0 buff-sticker.webp`
-                        );
-                        const mediaData = readFileSync("./buff-sticker.webp");
-                        buffer_img = mediaData;
-                    } catch (err) {
-                        await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                    }
+            let buffer_img: any = await downloadMediaMessage(
+                !m.quotedMsg ? m : m.quotedMsg,
+                "buffer",
+                {},
+                {
+                    logger: pino({ level: "silent" }),
+                    reuploadRequest: sock.updateMediaMessage,
                 }
-                const stickerimg = new Sticker(buffer_img, {
-                    pack: "Bot Wwjs - Fatih", // pack name
-                    author: m.argument ? m.argument.replace(/-\w+\s*/g, "").trim() : null, // author name
-                    type: m.argument.includes("-f")
-                        ? StickerTypes.FULL
-                        : m.argument.includes("-c")
-                        ? StickerTypes.CIRCLE
-                        : m.argument.includes("-r")
-                        ? StickerTypes.ROUNDED
-                        : StickerTypes.CROPPED, // sticker type
-                    quality: 20, // quality of the output file
-                });
-                await sock.sendMessage(m.chatId, await stickerimg.toMessage(), { quoted: m });
-                await sock.sendMessage(m.chatId, {
-                    text: `Additional option : \n-f : Full size sticker\n-c : Circle size sticker\n-r : Rounded size sticker\n\nBy Default is Cropped size sticker`,
-                });
-                // // await sleep(0.5);
-            } catch (err) {
-                await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                console.log(err);
-            }
+            );
+            // OLD WAYS
+            // if (m.type?.quotedMsg === "videoMessage" || m.type?.msg === "videoMessage") {
+            //     try {
+            //         console.log(path.normalize(__dirname + "/lib"));
+            //         if (!fs.existsSync(path.normalize(__dirname + "/lib"))) {
+            //             console.log("not exist");
+            //             fs.mkdir(path.normalize(__dirname + "/lib"), (err) => {
+            //                 if (err) {
+            //                     console.error(`Failed to create directory: ${err}`);
+            //                 }
+            //             });
+            //         }
+            //         const buffmp4 = path.normalize(__dirname + "/lib/buff-sticker.mp4");
+            //         const buffwebp = path.normalize(__dirname + "/lib/buff-sticker.webp");
+            //         await writeFile(buffmp4, buffer_img);
+            //         exec(
+            //             `ffmpeg -i ${buffmp4} -v quiet -vcodec libwebp -filter:v fps=fps=20 -lossless 0  -compression_level 3 -q:v 70 -loop 1 -preset picture -an -vsync 0 ${buffwebp}`,
+            //             (error, stdout, stderr) => {
+            //                 if (error) {
+            //                     console.error(`ffmpeg error: ${error.message}`);
+            //                     return;
+            //                 }
+            //                 if (stderr) {
+            //                     console.error(`ffmpeg stderr: ${stderr}`);
+            //                     return;
+            //                 }
+            //                 // console.log(`ffmpeg stdout: ${stdout}`);
+            //                 // console.log("Conversion successful");
+            //                 buffer_img = fs.readFileSync(buffmp4);
+            //                 console.log(buffer_img);
+            //             }
+            //         );
+            //     } catch (err) {
+            //         console.log(err);
+            //         await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+            //     }
+            // }
+            const stickerimg = new Sticker(buffer_img, {
+                pack: "Bot Wwjs - Fatih", // pack name
+                author: m.argument ? m.argument.replace(/-\w+\s*/g, "").trim() : null, // author name
+                type: m.argument.includes("-f")
+                    ? StickerTypes.FULL
+                    : m.argument.includes("-c")
+                    ? StickerTypes.CIRCLE
+                    : m.argument.includes("-r")
+                    ? StickerTypes.ROUNDED
+                    : StickerTypes.CROPPED, // sticker type
+                quality: 20, // quality of the output file
+            });
+            await sock.sendMessage(m.chatId, await stickerimg.toMessage(), { quoted: m });
+            await sock.sendMessage(m.chatId, {
+                text: `Additional option : \n-f : Full size sticker\n-c : Circle size sticker\n-r : Rounded size sticker\n\nBy Default is Cropped size sticker`,
+            });
+            // // await sleep(0.5);
         }
 
         if (m.bcommand === prefix + "gpt") {
