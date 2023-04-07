@@ -11,7 +11,7 @@ import makeWASocket, {
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import keepAlive from "./server";
-import { Sticker, createSticker, StickerTypes } from "wa-sticker-formatter";
+import { Sticker, StickerTypes } from "wa-sticker-formatter";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
 
@@ -135,7 +135,7 @@ async function connectToWhatsApp() {
                 );
                 const stickerimg = new Sticker(buffer_img, {
                     pack: "Bot Wwjs - Fatih", // pack name
-                    author: m.argument ? m.argument : null, // author name
+                    author: m.argument ? m.argument.replace(/-\w+/g, "") : null, // author name
                     type: m.argument.includes("-f") ? StickerTypes.FULL : StickerTypes.CROPPED, // sticker type
                     quality: 1, // quality of the output file
                 });
