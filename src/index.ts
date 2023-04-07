@@ -184,7 +184,7 @@ async function connectToWhatsApp() {
                         : m.argument.includes("-r")
                         ? StickerTypes.ROUNDED
                         : StickerTypes.CROPPED, // sticker type
-                    quality: 20, // quality of the output file
+                    quality: m.type?.quotedMsg === "videoMessage" || m.type?.msg === "videoMessage" ? 5 : 25, // quality of the output file
                 });
                 await sock.sendMessage(m.chatId, await stickerimg.toMessage(), { quoted: m });
                 await sock.sendMessage(m.chatId, {
