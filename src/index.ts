@@ -112,7 +112,7 @@ async function connectToWhatsApp() {
 
         m.groupMetadata = m.isGroupMsg ? await sock.groupMetadata(m.chatId) : false;
         let mediaType = ["imageMessage", "videoMessage", "stickerMessage", "audioMessage"];
-        m.isMedia = m.quotedMsg === false ? mediaType.includes(m.type.msg) : mediaType.includes(m.type.quotedMsg);
+        m.isMedia = !m.quotedMsg ? mediaType.includes(m.type.msg) : mediaType.includes(m.type.quotedMsg);
 
         // console.log(m);
         // console.log(m);
