@@ -12,7 +12,9 @@ import { Boom } from "@hapi/boom";
 import pino from "pino";
 import keepAlive from "./server";
 import { Sticker, StickerTypes } from "wa-sticker-formatter";
-// import { writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
+import { exec } from "child_process";
+import { readFileSync } from "fs";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
 async function connectToWhatsApp() {
@@ -124,7 +126,7 @@ async function connectToWhatsApp() {
                 return;
             }
             try {
-                const buffer_img: any = await downloadMediaMessage(
+                let buffer_img: any = await downloadMediaMessage(
                     !m.quotedMsg ? m : m.quotedMsg,
                     "buffer",
                     {},
@@ -133,6 +135,18 @@ async function connectToWhatsApp() {
                         reuploadRequest: sock.updateMediaMessage,
                     }
                 );
+                if (m.type.quotedMsg || m.type.msg) {
+                    try {
+                        await writeFile("./buff-sticker.mp4", buffer_img);
+                        exec(
+                            `ffmpeg -i buff-sticker.mp4 -v quiet -vcodec libwebp -filter:v fps=fps=20 -lossless 0  -compression_level 3 -q:v 70 -loop 1 -preset picture -an -vsync 0 buff-sticker.webp`
+                        );
+                        const mediaData = readFileSync("./buff-sticker.webp");
+                        buffer_img = mediaData;
+                    } catch (err) {
+                        await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                    }
+                }
                 const stickerimg = new Sticker(buffer_img, {
                     pack: "Bot Wwjs - Fatih", // pack name
                     author: m.argument ? m.argument.replace(/-\w+\s*/g, "").trim() : null, // author name
