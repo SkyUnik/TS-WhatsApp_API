@@ -122,6 +122,7 @@ async function connectToWhatsApp() {
             await sock.sendPresenceUpdate("composing", m.chatId);
             if (!m.isMedia) {
                 await sock.sendMessage(m.chatId, { text: "❓Please give a media to convert to sticker" }, { quoted: m });
+                return;
             }
             try {
                 const buffer_img: any = await downloadMediaMessage(
