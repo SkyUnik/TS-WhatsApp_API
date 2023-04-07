@@ -135,7 +135,7 @@ async function connectToWhatsApp() {
                         reuploadRequest: sock.updateMediaMessage,
                     }
                 );
-                if (m.type.quotedMsg || m.type.msg) {
+                if (m.type.quotedMsg === "videoMessage" || m.type.msg === "videoMessage") {
                     try {
                         await writeFile("./buff-sticker.mp4", buffer_img);
                         exec(
