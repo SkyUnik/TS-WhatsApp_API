@@ -14,7 +14,6 @@
         "body-parser": "^1.20.1",
         "bytes": "^3.1.2",
         "call-bind": "^1.0.2",
-        "chatgpt": "^5.2.2",
         "clone": "^2.1.2",
         "content-disposition": "^0.5.4",
         "content-type": "^1.0.5",

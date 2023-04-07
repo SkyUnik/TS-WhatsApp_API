@@ -12,7 +12,6 @@ import { Boom } from "@hapi/boom";
 import pino from "pino";
 import keepAlive from "./server";
 import { Sticker, StickerTypes } from "wa-sticker-formatter";
-import { ChatGPTUnofficialProxyAPI } from "chatgpt";
 // import { writeFile } from "fs/promises";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
