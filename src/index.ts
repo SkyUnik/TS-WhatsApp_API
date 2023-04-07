@@ -138,7 +138,7 @@ async function connectToWhatsApp() {
                     pack: "Bot Wwjs - Fatih", // pack name
                     author: m.argument ? m.argument.replace(/-\w+/g, "") : null, // author name
                     type: m.argument.includes("-f") ? StickerTypes.FULL : StickerTypes.CROPPED, // sticker type
-                    quality: 1, // quality of the output file
+                    quality: 20, // quality of the output file
                 });
                 await sock.sendMessage(m.chatId, await stickerimg.toMessage(), { quoted: m });
                 // // await sleep(0.5);
