@@ -176,7 +176,9 @@ async function connectToWhatsApp() {
                 // }
                 const stickerimg = new Sticker(buffer_img, {
                     pack: "Bot Wwjs - Fatih", // pack name
+                    id: sender_num.toString(),
                     author: m.argument ? m.argument.replace(/-\w+\s*/g, "").trim() : null, // author name
+                    categories: ["👋", "❗", "🗯️"],
                     type: m.argument.includes("-f")
                         ? StickerTypes.FULL
                         : m.argument.includes("-c")
@@ -184,11 +186,21 @@ async function connectToWhatsApp() {
                         : m.argument.includes("-r")
                         ? StickerTypes.ROUNDED
                         : StickerTypes.CROPPED, // sticker type
-                    quality: m.type?.quotedMsg === "videoMessage" || m.type?.msg === "videoMessage" ? 5 : 25, // quality of the output file
+                    quality: m.argument.includes("-h" || "-high")
+                        ? 100
+                        : m.argument.includes("-m" || "-medium" || "-med")
+                        ? 50
+                        : m.argument.includes("-l" || "-low")
+                        ? 10
+                        : m.argument.match(/-q-(\d+)/)
+                        ? Number(m.argument.match(/-q-(\d+)/)[1])
+                        : m.type?.quotedMsg === "videoMessage" || m.type?.msg === "videoMessage"
+                        ? 5
+                        : 25, // quality of the output file
                 });
                 await sock.sendMessage(m.chatId, await stickerimg.toMessage(), { quoted: m });
                 await sock.sendMessage(m.chatId, {
-                    text: `Additional option : \n-f : Full size sticker\n-c : Circle size sticker\n-r : Rounded size sticker\n\nBy Default is Cropped size sticker`,
+                    text: `Additional option : \n-f : Full size sticker\n-c : Circle size sticker\n-r : Rounded size sticker\n\nBy Default the size is crop\n\n-h : High res sticker\n-m : Medium res sticker\n-l : Low res sticker\n-q-[number] : Manually choosing the quality level , with a range from 1 to 100\n\nBy Default the is quality low~med res`,
                 });
             } catch (err) {
                 await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
