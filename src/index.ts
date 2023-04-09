@@ -13,10 +13,10 @@ import pino from "pino";
 import keepAlive from "./server";
 import { Sticker, StickerTypes, createSticker } from "wa-sticker-formatter";
 import sharp from "sharp";
-import { writeFile } from "fs/promises";
-import { exec } from "child_process";
-import path from "path";
-import * as fs from "fs";
+// import { writeFile } from "fs/promises";
+// import { exec } from "child_process";
+// import path from "path";
+// import * as fs from "fs";
 // import { promisify } from "util";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
@@ -124,10 +124,10 @@ async function connectToWhatsApp() {
                 await sock.sendMessage(m.chatId, { text: "❓[REJECTED] : Please give a media to convert to sticker" }, { quoted: m });
                 return;
             }
-            const sticker_mp4webp = path.normalize(__dirname + "/sticker_mp4this.webp");
-            const sticker_mp4gif = path.normalize(__dirname + "/sticker_mp4this.gif");
-            const sticker_mp4done = path.normalize(__dirname + "/sticker_mp4this.mp4");
-            const sticker_mp4another = path.normalize(__dirname + "/sticker_mp4other.mp4");
+            // const sticker_mp4webp = path.normalize(__dirname + "/sticker_mp4this.webp");
+            // const sticker_mp4gif = path.normalize(__dirname + "/sticker_mp4this.gif");
+            // const sticker_mp4done = path.normalize(__dirname + "/sticker_mp4this.mp4");
+            // const sticker_mp4another = path.normalize(__dirname + "/sticker_mp4other.mp4");
             if (m.type.quotedMsg === "stickerMessage") {
                 try {
                     let sticker_img: any = await downloadMediaMessage(
@@ -157,67 +157,72 @@ async function connectToWhatsApp() {
                     if (isAnimated) {
                         await sock.sendMessage(
                             m.chatId,
-                            { text: "❓[INFO] : The sticker is now being converted back, please wait it might take a while!" },
+                            {
+                                text: "❓[INFO] : Animated sticker cannot be converted back!, also if possible, the video will have no sound it will be muted. Why would you ?",
+                            },
                             { quoted: m }
                         );
                         // await sock.sendPresenceUpdate("composing", m.chatId);
-                        console.log("its running");
-                        // const videoBuffer = await sharp(sticker_img, { animated: true }).withMetadata().toFormat("gif").toBuffer();
-                        // Send the video buffer as a message
-                        console.log("NO ERROR SO FAR");
-                        console.log("PASS");
-                        try {
-                            await writeFile(sticker_mp4webp, sticker_img);
-                            if (fs.existsSync(sticker_mp4webp)) {
-                                exec(`convert -coalesce ${sticker_mp4webp} -loop 0 ${sticker_mp4gif}`, (err) => {
-                                    if (err) {
-                                        console.log(err);
-                                        sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                                    }
-                                    if (fs.existsSync(sticker_mp4gif)) {
-                                        exec(`ffmpeg -i ${sticker_mp4gif} ${sticker_mp4done}`, (err) => {
-                                            console.log("in the ffmpeg");
-                                            if (err) {
-                                                console.log(err);
-                                                sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                                            }
-                                            sock.sendMessage(m.chatId, {
-                                                video: { url: sticker_mp4done },
-                                                mimetype: "video/mp4",
-                                                // gifPlayback: true,
-                                            });
-                                            if (fs.existsSync(sticker_mp4webp)) {
-                                                try {
-                                                    fs.unlinkSync(sticker_mp4webp);
-                                                } catch (err) {
-                                                    sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                                                }
-                                            }
-                                            if (fs.existsSync(sticker_mp4gif)) {
-                                                try {
-                                                    fs.unlinkSync(sticker_mp4gif);
-                                                } catch (err) {
-                                                    sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                                                }
-                                            }
-                                            if (fs.existsSync(sticker_mp4done)) {
-                                                try {
-                                                    fs.unlinkSync(sticker_mp4done);
-                                                } catch (err) {
-                                                    sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                                                }
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                        } catch (err) {
-                            await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                        }
+                        //     console.log("its running");
+                        //     // const videoBuffer = await sharp(sticker_img, { animated: true }).withMetadata().toFormat("gif").toBuffer();
+                        //     // Send the video buffer as a message
+                        //     console.log("NO ERROR SO FAR");
+                        //     console.log("PASS");
+                        //     try {
+                        //         await writeFile(sticker_mp4webp, sticker_img);
+                        //         if (fs.existsSync(sticker_mp4webp)) {
+                        //             exec(`convert -coalesce ${sticker_mp4webp} -loop 0 ${sticker_mp4gif}`, (err) => {
+                        //                 if (err) {
+                        //                     console.log(err);
+                        //                     sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                        //                 }
+                        //                 if (fs.existsSync(sticker_mp4gif)) {
+                        //                     exec(`ffmpeg -i ${sticker_mp4gif} ${sticker_mp4done}`, (err) => {
+                        //                         console.log("in the ffmpeg");
+                        //                         if (err) {
+                        //                             console.log(err);
+                        //                             sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                        //                         }
+                        //                         sock.sendMessage(m.chatId, {
+                        //                             video: { url: sticker_mp4done },
+                        //                             mimetype: "video/mp4",
+                        //                             // gifPlayback: true,
+                        //                         });
+                        //                         if (fs.existsSync(sticker_mp4webp)) {
+                        //                             try {
+                        //                                 fs.unlinkSync(sticker_mp4webp);
+                        //                             } catch (err) {
+                        //                                 sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                        //                             }
+                        //                         }
+                        //                         if (fs.existsSync(sticker_mp4gif)) {
+                        //                             try {
+                        //                                 fs.unlinkSync(sticker_mp4gif);
+                        //                             } catch (err) {
+                        //                                 sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                        //                             }
+                        //                         }
+                        //                         if (fs.existsSync(sticker_mp4done)) {
+                        //                             try {
+                        //                                 fs.unlinkSync(sticker_mp4done);
+                        //                             } catch (err) {
+                        //                                 sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                        //                             }
+                        //                         }
+                        //                     });
+                        //                 }
+                        //             });
+                        //         }
+                        //     } catch (err) {
+                        //         await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                        //     }
                     } else {
                         // Send the WebP buffer as an image message
                         await sock.sendMessage(m.chatId, {
                             image: sticker_img,
+                        });
+                        await sock.sendMessage(m.chatId, {
+                            text: "Sticker has been successfully converted back to image",
                         });
                     }
                     return;
@@ -237,33 +242,33 @@ async function connectToWhatsApp() {
                         reuploadRequest: sock.updateMediaMessage,
                     }
                 );
-                // OLD WAYS -- Still USE
-                if (m.type?.quotedMsg === "videoMessage" || m.type?.msg === "videoMessage") {
-                    try {
-                        await writeFile(sticker_mp4done, buffer_img);
-                        if (fs.existsSync(sticker_mp4done)) {
-                            exec(`ffmpeg -i ${sticker_mp4done} -t 3 ${sticker_mp4another}`, (err) => {
-                                if (err) {
-                                    console.log(err);
-                                    sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                                }
-                                if (fs.existsSync(sticker_mp4another)) {
-                                    try {
-                                        buffer_img = fs.readFileSync(sticker_mp4another);
-                                        console.log(buffer_img);
-                                        fs.unlinkSync(sticker_mp4done);
-                                        fs.unlinkSync(sticker_mp4another);
-                                    } catch (err) {
-                                        sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                                    }
-                                }
-                            });
-                        }
-                    } catch (err) {
-                        console.log(err);
-                        await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                    }
-                }
+                // OLD WAYS --
+                // if (m.type?.quotedMsg === "videoMessage" || m.type?.msg === "videoMessage") {
+                //     try {
+                //         await writeFile(sticker_mp4done, buffer_img);
+                //         if (fs.existsSync(sticker_mp4done)) {
+                //             exec(`ffmpeg -i ${sticker_mp4done} -t 3 ${sticker_mp4another}`, (err) => {
+                //                 if (err) {
+                //                     console.log(err);
+                //                     sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                //                 }
+                //                 if (fs.existsSync(sticker_mp4another)) {
+                //                     try {
+                //                         buffer_img = fs.readFileSync(sticker_mp4another);
+                //                         console.log(buffer_img);
+                //                         fs.unlinkSync(sticker_mp4done);
+                //                         fs.unlinkSync(sticker_mp4another);
+                //                     } catch (err) {
+                //                         sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                //                     }
+                //                 }
+                //             });
+                //         }
+                //     } catch (err) {
+                //         console.log(err);
+                //         await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                //     }
+                // }
                 const stickerimg = new Sticker(buffer_img, {
                     pack: "Bot Wwjs - Fatih", // pack name
                     id: sender_num.toString(),
