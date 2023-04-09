@@ -11,8 +11,10 @@ import makeWASocket, {
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import keepAlive from "./server";
-import { Sticker, StickerTypes, createSticker } from "wa-sticker-formatter";
+import ChatGpt from "./Chat_GPT";
+import { Sticker, StickerTypes } from "wa-sticker-formatter";
 import sharp from "sharp";
+import { ChatCompletionRequestMessage } from "openai";
 // import { writeFile } from "fs/promises";
 // import { exec } from "child_process";
 // import path from "path";
@@ -58,6 +60,10 @@ async function connectToWhatsApp() {
             quotedMsg?: false | WAMessage;
             owner?: string;
             bcommand?: string;
+        };
+        type ChatGPT_API = {
+            role: any;
+            content: any;
         };
         let m: MsgConstructor = m_raw.messages[0];
         // console.log(JSON.stringify(m, undefined, 2));
@@ -316,16 +322,19 @@ async function connectToWhatsApp() {
 
         if (m.bcommand === prefix + "gpt") {
             await sock.sendPresenceUpdate("composing", m.chatId);
-            await sock.sendMessage(
-                m.chatId,
-                { text: `ℹ️[INFO] : Attention!!, ${prefix}gpt command is still in development and might be remove` },
-                { quoted: m }
-            );
-            return;
-            try {
-                // await sock.sendMessage(m.chatId, { text: "🗣️[CHATGPT] : " + chatgpt.text }, { quoted: m });
-            } catch (err) {
-                await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+            if (m.sender === m.owner) {
+                if (!m.argument) {
+                    await sock.sendPresenceUpdate("composing", m.chatId);
+                    await sock.sendMessage(m.chatId, { text: "❓Please put an argument sire" }, { quoted: m });
+                } else {
+                    try {
+                        const GPT = await ChatGpt(m.argument);
+                        console.log(GPT);
+                        await sock.sendMessage(m.chatId, { text: "🗣️[CHATGPT]🟩 : " + GPT.choices[0].message.content }, { quoted: m });
+                    } catch (err) {
+                        await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                    }
+                }
             }
         }
         if (m.bcommand === prefix + "anime") {

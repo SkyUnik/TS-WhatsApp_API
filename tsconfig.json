@@ -1,10 +1,10 @@
 {
     "compilerOptions": {
-        "moduleResolution": "node",
         "target": "ESNext",
+        "moduleResolution": "nodenext",
         "module": "NodeNext",
-        "outDir": "dist",
-        "resolveJsonModule": true
+        "outDir": "dist"
+        // "resolveJsonModule": true
     },
     "include": ["src/**/*"]
 }
