@@ -243,6 +243,17 @@ async function connectToWhatsApp() {
                     }
                 );
                 // OLD WAYS --
+                if (m.type?.quotedMsg === "videoMessage" || m.type?.msg === "videoMessage") {
+                    try {
+                        let buffer_aloc = Buffer.alloc(1083000);
+                        buffer_aloc.fill(buffer_img);
+                        console.log(buffer_img);
+                        buffer_img = buffer_aloc;
+                        console.log(buffer_img);
+                    } catch (err) {
+                        await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
+                    }
+                }
                 // if (m.type?.quotedMsg === "videoMessage" || m.type?.msg === "videoMessage") {
                 //     try {
                 //         await writeFile(sticker_mp4done, buffer_img);

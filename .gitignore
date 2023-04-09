@@ -1,4 +1,5 @@
 yarn.lock
+.env
 package-lock.json
 yarn-error.log
 proxy.ts
