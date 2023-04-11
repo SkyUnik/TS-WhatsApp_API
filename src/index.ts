@@ -338,25 +338,7 @@ async function connectToWhatsApp() {
             }
             const jsonContent = fs.readFileSync(GPT_JSON, "utf-8");
             const GPT_allowed: string[] = JSON.parse(jsonContent);
-            if (GPT_allowed.includes(m.chatId)) {
-                if (!m.argument) {
-                    await sock.sendPresenceUpdate("composing", m.chatId);
-                    await sock.sendMessage(m.chatId, { text: "❓Please put an argument sire" }, { quoted: m });
-                } else {
-                    try {
-                        await sock.sendMessage(
-                            m.chatId,
-                            { text: "🔃 [CHATGPT] : Please bear with me as ChatGPT processes your request; it may take a moment." },
-                            { quoted: m }
-                        );
-                        const GPT = await ChatGpt(m.argument);
-                        // console.log(GPT);
-                        await sock.sendMessage(m.chatId, { text: "🗣️ [CHATGPT] 🟢 : " + GPT.choices[0].message.content }, { quoted: m });
-                    } catch (err) {
-                        await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
-                    }
-                }
-            } else {
+            if (!GPT_allowed.includes(m.chatId)) {
                 await sock.sendMessage(
                     m.chatId,
                     {
@@ -364,6 +346,22 @@ async function connectToWhatsApp() {
                     },
                     { quoted: m }
                 );
+            }
+            if (!m.argument) {
+                await sock.sendPresenceUpdate("composing", m.chatId);
+                await sock.sendMessage(m.chatId, { text: "❓Please put an argument sire" }, { quoted: m });
+            }
+            try {
+                await sock.sendMessage(
+                    m.chatId,
+                    { text: "🔃 [CHATGPT] : Please bear with me as ChatGPT processes your request; it may take a moment." },
+                    { quoted: m }
+                );
+                const GPT = await ChatGpt(m.argument);
+                // console.log(GPT);
+                await sock.sendMessage(m.chatId, { text: "🗣️ [CHATGPT] 🟢 : " + GPT.choices[0].message.content }, { quoted: m });
+            } catch (err) {
+                await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
             }
         }
         if (m.bcommand === prefix + "anime") {
