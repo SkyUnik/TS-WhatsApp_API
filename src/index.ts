@@ -327,6 +327,11 @@ async function connectToWhatsApp() {
             await sock.sendPresenceUpdate("composing", m.chatId);
             if (!m.isGroupMsg) {
                 await sock.sendMessage(m.chatId, { text: `for now ${prefix}gpt is only available in *GROUP CHAT*` }, { quoted: m });
+                return;
+            }
+            if (!m.argument) {
+                await sock.sendMessage(m.chatId, { text: "❓To proceed on your request, please add a second argument." }, { quoted: m });
+                return;
             }
             const filteredGroups = Object.values(ListAllGroup)
                 .filter((group) => group.participants.some((participant) => participant.id === m.owner))
@@ -346,10 +351,7 @@ async function connectToWhatsApp() {
                     },
                     { quoted: m }
                 );
-            }
-            if (!m.argument) {
-                await sock.sendPresenceUpdate("composing", m.chatId);
-                await sock.sendMessage(m.chatId, { text: "❓Please put an argument sire" }, { quoted: m });
+                return;
             }
             try {
                 await sock.sendMessage(
