@@ -14,14 +14,15 @@ import keepAlive from "./server";
 import ChatGpt from "./Chat_GPT";
 import { Sticker, StickerTypes } from "wa-sticker-formatter";
 import sharp from "sharp";
-import { ChatCompletionRequestMessage } from "openai";
+import * as fs from "fs";
 // import { writeFile } from "fs/promises";
 // import { exec } from "child_process";
-// import path from "path";
+import path from "path";
 // import * as fs from "fs";
 // import { promisify } from "util";
 
 const prefix = "!"; // Prefix to be use can be '!' or '.' etc
+const Chat_GPT_allowed = "/Gpt_Allowed.json";
 async function connectToWhatsApp() {
     const { version, isLatest } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState("auth_info");
@@ -120,6 +121,8 @@ async function connectToWhatsApp() {
         m.groupMetadata = m.isGroupMsg ? await sock.groupMetadata(m.chatId) : false;
         let mediaType = ["imageMessage", "videoMessage", "stickerMessage", "audioMessage"];
         m.isMedia = !m.quotedMsg ? mediaType.includes(m.type.msg) : mediaType.includes(m.type.quotedMsg);
+        const participants = m.groupMetadata ? m.groupMetadata.participants.map((i) => i.id) : null;
+        const ListAllGroup = await sock.groupFetchAllParticipating();
 
         // console.log(m);
         console.log(`[New Message] : --isGroupMsg:'${m.isGroupMsg}' --message:'${m.body}' --sender:'${m.sender}' --user:'${m.pushName}'`);
@@ -322,19 +325,45 @@ async function connectToWhatsApp() {
 
         if (m.bcommand === prefix + "gpt") {
             await sock.sendPresenceUpdate("composing", m.chatId);
-            if (m.sender === m.owner) {
+            if (!m.isGroupMsg) {
+                await sock.sendMessage(m.chatId, { text: `for now ${prefix}gpt is only available in *GROUP CHAT*` }, { quoted: m });
+            }
+            const filteredGroups = Object.values(ListAllGroup)
+                .filter((group) => group.participants.some((participant) => participant.id === m.owner))
+                .map((group) => group.id);
+            const GPT_JSON = path.normalize(__dirname + Chat_GPT_allowed);
+            if (!fs.existsSync(GPT_JSON)) {
+                // console.log("not exist");
+                fs.writeFileSync(GPT_JSON, JSON.stringify(filteredGroups));
+            }
+            const jsonContent = fs.readFileSync(GPT_JSON, "utf-8");
+            const GPT_allowed: string[] = JSON.parse(jsonContent);
+            if (GPT_allowed.includes(m.chatId)) {
                 if (!m.argument) {
                     await sock.sendPresenceUpdate("composing", m.chatId);
                     await sock.sendMessage(m.chatId, { text: "❓Please put an argument sire" }, { quoted: m });
                 } else {
                     try {
+                        await sock.sendMessage(
+                            m.chatId,
+                            { text: "🔃 [CHATGPT] : Please bear with me as ChatGPT processes your request; it may take a moment." },
+                            { quoted: m }
+                        );
                         const GPT = await ChatGpt(m.argument);
-                        console.log(GPT);
-                        await sock.sendMessage(m.chatId, { text: "🗣️[CHATGPT]🟩 : " + GPT.choices[0].message.content }, { quoted: m });
+                        // console.log(GPT);
+                        await sock.sendMessage(m.chatId, { text: "🗣️ [CHATGPT] 🟢 : " + GPT.choices[0].message.content }, { quoted: m });
                     } catch (err) {
                         await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
                     }
                 }
+            } else {
+                await sock.sendMessage(
+                    m.chatId,
+                    {
+                        text: `⚠️[ERROR] : Access to ${prefix}gpt is limited to certain whitelisted groups. To see if your group is eligible, please contact wa.me/6281382519681 and politely request inclusion.\nYour Group ID:${m.chatId}`,
+                    },
+                    { quoted: m }
+                );
             }
         }
         if (m.bcommand === prefix + "anime") {
@@ -360,7 +389,6 @@ async function connectToWhatsApp() {
             await sock.sendPresenceUpdate("composing", m.chatId);
             // await sleep(0.5);
             if (m.isGroupMsg && m.groupMetadata && typeof m.groupMetadata === "object") {
-                const participants = m.groupMetadata.participants.map((i) => i.id);
                 if (!m.argument) {
                     const people_tag = participants.map((item) => "@" + item.match(/\d+/g).join(" ")).join(" ");
                     sock.sendMessage(

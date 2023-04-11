@@ -1,5 +1,7 @@
 yarn.lock
 .env
+*IGNORE_THIS*
+Gpt_Allowed.json
 package-lock.json
 yarn-error.log
 proxy.ts
