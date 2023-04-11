@@ -1,18 +1,16 @@
 import { Configuration, OpenAIApi, ChatCompletionRequestMessage } from "openai";
 import dotenv from "dotenv";
-
 dotenv.config();
-const APIKEY = process.env["OPENAI_API_KEY"];
-console.log(APIKEY);
+const mySecret = process.env["OPENAI_API_KEY"];
 export default async function ChatGpt(msg: string) {
     const configuration = new Configuration({
-        apiKey: APIKEY,
+        apiKey: mySecret,
     });
     try {
         const moderation = await fetch("https://api.openai.com/v1/moderations", {
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${APIKEY}`,
+                Authorization: `Bearer ${mySecret}`,
             },
             method: "POST",
             body: JSON.stringify({
