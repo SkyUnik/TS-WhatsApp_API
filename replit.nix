@@ -1,10 +1,10 @@
 { pkgs }: {
     deps = [
-        pkgs.nodejs
-        pkgs.imagemagick
-        pkgs.nodePackages.typescript
-        pkgs.jellyfin-ffmpeg
-        pkgs.git
         pkgs.yarn
+        pkgs.nodejs
+        pkgs.jellyfin-ffmpeg
+        pkgs.nodePackages.npm
+        pkgs.nodePackages.typescript
+        pkgs.nodePackages.pm2
     ];
 }
