@@ -333,7 +333,7 @@ async function connectToWhatsApp() {
                 await sock.sendMessage(m.chatId, { text: "❓To proceed on your request, please add a second argument." }, { quoted: m });
                 return;
             }
-            const filteredGroups = Object.values(ListAllGroup)
+            let filteredGroups = Object.values(ListAllGroup)
                 .filter((group) => group.participants.some((participant) => participant.id === m.owner))
                 .map((group) => group.id);
             const GPT_JSON = path.normalize(__dirname + Chat_GPT_allowed);
@@ -342,6 +342,13 @@ async function connectToWhatsApp() {
                 fs.writeFileSync(GPT_JSON, JSON.stringify(filteredGroups));
             }
             const jsonContent = fs.readFileSync(GPT_JSON, "utf-8");
+            for (const elem of jsonContent) {
+                if (!filteredGroups.includes(elem)) {
+                    filteredGroups = filteredGroups.concat(elem);
+                }
+            }
+            const jsonData = JSON.stringify(filteredGroups);
+            fs.writeFileSync(GPT_JSON, jsonData);
             const GPT_allowed: string[] = JSON.parse(jsonContent);
             if (!GPT_allowed.includes(m.chatId)) {
                 await sock.sendMessage(
