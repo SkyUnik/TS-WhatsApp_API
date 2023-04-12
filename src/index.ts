@@ -347,7 +347,7 @@ async function connectToWhatsApp() {
                 await sock.sendMessage(
                     m.chatId,
                     {
-                        text: `⚠️[ERROR] : Access to ${prefix}gpt is limited to certain whitelisted groups. To see if your group is eligible, please contact wa.me/6281382519681 and politely request inclusion.\nYour Group ID:${m.chatId}`,
+                        text: `⚠️[ERROR] : Access to ${prefix}gpt is limited to certain whitelisted groups. To see if your group is eligible, please contact wa.me/6281382519681 and politely request inclusion.\nYour Group ID: ${m.chatId}`,
                     },
                     { quoted: m }
                 );
