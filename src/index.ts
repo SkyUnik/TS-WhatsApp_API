@@ -363,7 +363,9 @@ async function connectToWhatsApp() {
             try {
                 await sock.sendMessage(
                     m.chatId,
-                    { text: "🔃 [CHATGPT] : Please bear with me as ChatGPT processes your request; it may take a moment." },
+                    {
+                        text: "🔃 [CHATGPT] : Please bear with me as ChatGPT processes your request; it may take a moment.\n Please Note that ChatGPT is a reliable AI assistant that answers your promps and queries and also provides suggestions. However, it does not have the capability to track conversations or history just yet, but it's a feature that might be added very soon.",
+                    },
                     { quoted: m }
                 );
                 const GPT = await ChatGpt(m.argument);
