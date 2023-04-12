@@ -78,6 +78,7 @@ async function connectToWhatsApp() {
         if (!m.message) return;
 
         await sock.readMessages([m.key]);
+        const botnumber = sock.user.id.replace(/:(\d+)@s.whatsapp.net$/, "@s.whatsapp.net");
         // Format
         m.owner = "6281382519681@s.whatsapp.net";
         m.type = {};
@@ -113,6 +114,7 @@ async function connectToWhatsApp() {
                     remoteJid: m.chatId,
                     id: m.message[m.type.msg]?.contextInfo?.stanzaId,
                     participant: m.message[m.type.msg]?.contextInfo?.participant,
+                    fromMe: botnumber === m.message[m.type.msg]?.contextInfo?.participant,
                 },
                 message: new proto.Message(m.message[m.type.msg]?.contextInfo.quotedMessage),
             };
@@ -364,13 +366,13 @@ async function connectToWhatsApp() {
                 await sock.sendMessage(
                     m.chatId,
                     {
-                        text: "🔃 [CHATGPT] : Please bear with me as ChatGPT processes your request; it may take a moment.\n Please Note that ChatGPT is a reliable AI assistant that answers your promps and queries and also provides suggestions. However, it does not have the capability to track conversations or history just yet, but it's a feature that might be added very soon.",
+                        text: "🔃 [CHATGPT] : Please bear with me as ChatGPT processes your request it may take a moment. Please Note that ChatGPT is a reliable AI assistant that answers your propmts and queries and also provides suggestion.\n\n*Knowledge cutoff: 2021-09-01.*",
                     },
                     { quoted: m }
                 );
-                const GPT = await ChatGpt(m.argument);
+                const GPT = await ChatGpt(m);
                 // console.log(GPT);
-                await sock.sendMessage(m.chatId, { text: "🗣️ [CHATGPT] 🟢 : " + GPT.choices[0].message.content }, { quoted: m });
+                await sock.sendMessage(m.chatId, { text: "🗣️ [CHATGPT] 🟢 : \n" + GPT.choices[0].message.content }, { quoted: m });
             } catch (err) {
                 await sock.sendMessage(m.chatId, { text: "⚠️[ERROR] : " + err }, { quoted: m });
             }
