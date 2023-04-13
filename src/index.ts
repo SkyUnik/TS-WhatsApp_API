@@ -343,16 +343,12 @@ async function connectToWhatsApp() {
                 // console.log("not exist");
                 fs.writeFileSync(GPT_JSON, JSON.stringify(filteredGroups));
             }
-            const jsonContent = fs.readFileSync(GPT_JSON, "utf-8");
-            for (const elem of jsonContent) {
-                if (!filteredGroups.includes(elem)) {
-                    filteredGroups = filteredGroups.concat(elem);
-                }
-            }
-            const jsonData = JSON.stringify(filteredGroups);
-            fs.writeFileSync(GPT_JSON, jsonData);
+            let jsonContent: any = fs.readFileSync(GPT_JSON);
             const GPT_allowed: string[] = JSON.parse(jsonContent);
-            if (!GPT_allowed.includes(m.chatId)) {
+            let jsonNow = GPT_allowed.concat(filteredGroups.filter((item) => !GPT_allowed.includes(item)));
+            const jsonData = JSON.stringify(jsonNow);
+            fs.writeFileSync(GPT_JSON, jsonData);
+            if (!jsonNow.includes(m.chatId)) {
                 await sock.sendMessage(
                     m.chatId,
                     {

@@ -40,7 +40,7 @@ export default async function ChatGpt(msg) {
         let message_user: ChatCompletionRequestMessage = { role: "user", content: msg.argument };
         messages.push(message_user);
         messages.map((message: ChatCompletionRequestMessage) => JSON.stringify(message)).join(",");
-        console.log(messages);
+        // console.log(messages);
         try {
             const completion = await openai.createChatCompletion({
                 model: "gpt-3.5-turbo",
