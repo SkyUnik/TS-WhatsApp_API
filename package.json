@@ -19,7 +19,7 @@
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "start": "npm install && npm fund && tsc && pm2 start dist/index.js && pm2 save && pm2 logs"
     },
     "repository": {
         "type": "git",
